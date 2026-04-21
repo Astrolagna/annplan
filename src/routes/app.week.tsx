@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { addDays, fromISO, todayISO, toISO, weekDays, RU_MONTHS_GEN } from "@/lib/date-utils";
@@ -10,7 +9,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/app/week")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: WeekLayout,
 });
 

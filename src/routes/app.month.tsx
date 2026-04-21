@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RU_MONTHS } from "@/lib/date-utils";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
 
 const searchSchema = z.object({
   ym: z.string().regex(/^\d{4}-\d{2}$/).optional(),
 });
 
 export const Route = createFileRoute("/app/month")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: MonthLayout,
 });
 
