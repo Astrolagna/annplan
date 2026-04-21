@@ -13,7 +13,11 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWeekRouteImport } from './routes/app.week'
 import { Route as AppMonthRouteImport } from './routes/app.month'
+import { Route as AppDayRouteImport } from './routes/app.day'
+import { Route as AppWeekTransitsRouteImport } from './routes/app.week.transits'
+import { Route as AppWeekPlanRouteImport } from './routes/app.week.plan'
 import { Route as AppMonthTransitsRouteImport } from './routes/app.month.transits'
 import { Route as AppMonthOverviewRouteImport } from './routes/app.month.overview'
 import { Route as AppMonthGoalsRouteImport } from './routes/app.month.goals'
@@ -38,10 +42,30 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWeekRoute = AppWeekRouteImport.update({
+  id: '/week',
+  path: '/week',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMonthRoute = AppMonthRouteImport.update({
   id: '/month',
   path: '/month',
   getParentRoute: () => AppRoute,
+} as any)
+const AppDayRoute = AppDayRouteImport.update({
+  id: '/day',
+  path: '/day',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWeekTransitsRoute = AppWeekTransitsRouteImport.update({
+  id: '/transits',
+  path: '/transits',
+  getParentRoute: () => AppWeekRoute,
+} as any)
+const AppWeekPlanRoute = AppWeekPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AppWeekRoute,
 } as any)
 const AppMonthTransitsRoute = AppMonthTransitsRouteImport.update({
   id: '/transits',
@@ -64,20 +88,28 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
   '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
   '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,10 +117,14 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
   '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,30 +133,42 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/app/day'
     | '/app/month'
+    | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
     | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/app'
     | '/login'
     | '/register'
+    | '/app/day'
     | '/app/month'
+    | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
     | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/login'
     | '/register'
+    | '/app/day'
     | '/app/month'
+    | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
     | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,12 +208,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/week': {
+      id: '/app/week'
+      path: '/week'
+      fullPath: '/app/week'
+      preLoaderRoute: typeof AppWeekRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/month': {
       id: '/app/month'
       path: '/month'
       fullPath: '/app/month'
       preLoaderRoute: typeof AppMonthRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/day': {
+      id: '/app/day'
+      path: '/day'
+      fullPath: '/app/day'
+      preLoaderRoute: typeof AppDayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/week/transits': {
+      id: '/app/week/transits'
+      path: '/transits'
+      fullPath: '/app/week/transits'
+      preLoaderRoute: typeof AppWeekTransitsRouteImport
+      parentRoute: typeof AppWeekRoute
+    }
+    '/app/week/plan': {
+      id: '/app/week/plan'
+      path: '/plan'
+      fullPath: '/app/week/plan'
+      preLoaderRoute: typeof AppWeekPlanRouteImport
+      parentRoute: typeof AppWeekRoute
     }
     '/app/month/transits': {
       id: '/app/month/transits'
@@ -207,12 +283,29 @@ const AppMonthRouteWithChildren = AppMonthRoute._addFileChildren(
   AppMonthRouteChildren,
 )
 
+interface AppWeekRouteChildren {
+  AppWeekPlanRoute: typeof AppWeekPlanRoute
+  AppWeekTransitsRoute: typeof AppWeekTransitsRoute
+}
+
+const AppWeekRouteChildren: AppWeekRouteChildren = {
+  AppWeekPlanRoute: AppWeekPlanRoute,
+  AppWeekTransitsRoute: AppWeekTransitsRoute,
+}
+
+const AppWeekRouteWithChildren =
+  AppWeekRoute._addFileChildren(AppWeekRouteChildren)
+
 interface AppRouteChildren {
+  AppDayRoute: typeof AppDayRoute
   AppMonthRoute: typeof AppMonthRouteWithChildren
+  AppWeekRoute: typeof AppWeekRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppDayRoute: AppDayRoute,
   AppMonthRoute: AppMonthRouteWithChildren,
+  AppWeekRoute: AppWeekRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
