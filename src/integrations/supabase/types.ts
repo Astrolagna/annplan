@@ -14,7 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      astro_events: {
+        Row: {
+          created_at: string
+          date: string
+          day_color: string
+          description_ru: string
+          event_type: string
+          id: string
+          planet: string | null
+          sign: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          day_color: string
+          description_ru: string
+          event_type: string
+          id?: string
+          planet?: string | null
+          sign?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          day_color?: string
+          description_ru?: string
+          event_type?: string
+          id?: string
+          planet?: string | null
+          sign?: string | null
+        }
+        Relationships: []
+      }
+      goals_monthly: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_done: boolean
+          slot: number
+          title: string
+          updated_at: string
+          user_id: string
+          year_month: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_done?: boolean
+          slot: number
+          title?: string
+          updated_at?: string
+          user_id: string
+          year_month: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_done?: boolean
+          slot?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year_month?: string
+        }
+        Relationships: []
+      }
+      notes: {
+        Row: {
+          content: string
+          created_at: string
+          date: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          date: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          date?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          is_done: boolean
+          sort_order: number
+          time_slot: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          is_done?: boolean
+          sort_order?: number
+          time_slot?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          is_done?: boolean
+          sort_order?: number
+          time_slot?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
