@@ -9,38 +9,198 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWeekRouteImport } from './routes/app.week'
+import { Route as AppMonthRouteImport } from './routes/app.month'
+import { Route as AppDayRouteImport } from './routes/app.day'
+import { Route as AppWeekTransitsRouteImport } from './routes/app.week.transits'
+import { Route as AppWeekPlanRouteImport } from './routes/app.week.plan'
+import { Route as AppMonthTransitsRouteImport } from './routes/app.month.transits'
+import { Route as AppMonthOverviewRouteImport } from './routes/app.month.overview'
+import { Route as AppMonthGoalsRouteImport } from './routes/app.month.goals'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWeekRoute = AppWeekRouteImport.update({
+  id: '/week',
+  path: '/week',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMonthRoute = AppMonthRouteImport.update({
+  id: '/month',
+  path: '/month',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDayRoute = AppDayRouteImport.update({
+  id: '/day',
+  path: '/day',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWeekTransitsRoute = AppWeekTransitsRouteImport.update({
+  id: '/transits',
+  path: '/transits',
+  getParentRoute: () => AppWeekRoute,
+} as any)
+const AppWeekPlanRoute = AppWeekPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AppWeekRoute,
+} as any)
+const AppMonthTransitsRoute = AppMonthTransitsRouteImport.update({
+  id: '/transits',
+  path: '/transits',
+  getParentRoute: () => AppMonthRoute,
+} as any)
+const AppMonthOverviewRoute = AppMonthOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AppMonthRoute,
+} as any)
+const AppMonthGoalsRoute = AppMonthGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AppMonthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/day': typeof AppDayRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/week': typeof AppWeekRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
+  '/app/week/plan': typeof AppWeekPlanRoute
+  '/app/week/transits': typeof AppWeekTransitsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/day'
+    | '/app/month'
+    | '/app/week'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/day'
+    | '/app/month'
+    | '/app/week'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/day'
+    | '/app/month'
+    | '/app/week'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
+    | '/app/week/plan'
+    | '/app/week/transits'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +208,114 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/week': {
+      id: '/app/week'
+      path: '/week'
+      fullPath: '/app/week'
+      preLoaderRoute: typeof AppWeekRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/month': {
+      id: '/app/month'
+      path: '/month'
+      fullPath: '/app/month'
+      preLoaderRoute: typeof AppMonthRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/day': {
+      id: '/app/day'
+      path: '/day'
+      fullPath: '/app/day'
+      preLoaderRoute: typeof AppDayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/week/transits': {
+      id: '/app/week/transits'
+      path: '/transits'
+      fullPath: '/app/week/transits'
+      preLoaderRoute: typeof AppWeekTransitsRouteImport
+      parentRoute: typeof AppWeekRoute
+    }
+    '/app/week/plan': {
+      id: '/app/week/plan'
+      path: '/plan'
+      fullPath: '/app/week/plan'
+      preLoaderRoute: typeof AppWeekPlanRouteImport
+      parentRoute: typeof AppWeekRoute
+    }
+    '/app/month/transits': {
+      id: '/app/month/transits'
+      path: '/transits'
+      fullPath: '/app/month/transits'
+      preLoaderRoute: typeof AppMonthTransitsRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
+    '/app/month/overview': {
+      id: '/app/month/overview'
+      path: '/overview'
+      fullPath: '/app/month/overview'
+      preLoaderRoute: typeof AppMonthOverviewRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
+    '/app/month/goals': {
+      id: '/app/month/goals'
+      path: '/goals'
+      fullPath: '/app/month/goals'
+      preLoaderRoute: typeof AppMonthGoalsRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
   }
 }
 
+interface AppMonthRouteChildren {
+  AppMonthGoalsRoute: typeof AppMonthGoalsRoute
+  AppMonthOverviewRoute: typeof AppMonthOverviewRoute
+  AppMonthTransitsRoute: typeof AppMonthTransitsRoute
+}
+
+const AppMonthRouteChildren: AppMonthRouteChildren = {
+  AppMonthGoalsRoute: AppMonthGoalsRoute,
+  AppMonthOverviewRoute: AppMonthOverviewRoute,
+  AppMonthTransitsRoute: AppMonthTransitsRoute,
+}
+
+const AppMonthRouteWithChildren = AppMonthRoute._addFileChildren(
+  AppMonthRouteChildren,
+)
+
+interface AppWeekRouteChildren {
+  AppWeekPlanRoute: typeof AppWeekPlanRoute
+  AppWeekTransitsRoute: typeof AppWeekTransitsRoute
+}
+
+const AppWeekRouteChildren: AppWeekRouteChildren = {
+  AppWeekPlanRoute: AppWeekPlanRoute,
+  AppWeekTransitsRoute: AppWeekTransitsRoute,
+}
+
+const AppWeekRouteWithChildren =
+  AppWeekRoute._addFileChildren(AppWeekRouteChildren)
+
+interface AppRouteChildren {
+  AppDayRoute: typeof AppDayRoute
+  AppMonthRoute: typeof AppMonthRouteWithChildren
+  AppWeekRoute: typeof AppWeekRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppDayRoute: AppDayRoute,
+  AppMonthRoute: AppMonthRouteWithChildren,
+  AppWeekRoute: AppWeekRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
