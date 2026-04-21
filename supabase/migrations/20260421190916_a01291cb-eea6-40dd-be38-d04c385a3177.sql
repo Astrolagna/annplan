@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.astro_events;
