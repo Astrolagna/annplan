@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,7 +15,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/app/month/goals")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: MonthGoals,
 });
 

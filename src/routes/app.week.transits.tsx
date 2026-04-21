@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
+
 import { supabase } from "@/integrations/supabase/client";
 import { type AstroEvent, DAY_COLOR_BG, DAY_COLOR_LABEL, eventIcon } from "@/lib/astro";
 import { formatDDMM, fromISO, toISO, todayISO, weekDays } from "@/lib/date-utils";
@@ -11,7 +11,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/app/week/transits")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: WeekTransits,
 });
 
