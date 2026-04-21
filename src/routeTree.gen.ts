@@ -14,6 +14,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMonthRouteImport } from './routes/app.month'
+import { Route as AppMonthTransitsRouteImport } from './routes/app.month.transits'
+import { Route as AppMonthOverviewRouteImport } from './routes/app.month.overview'
+import { Route as AppMonthGoalsRouteImport } from './routes/app.month.goals'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -40,20 +43,41 @@ const AppMonthRoute = AppMonthRouteImport.update({
   path: '/month',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMonthTransitsRoute = AppMonthTransitsRouteImport.update({
+  id: '/transits',
+  path: '/transits',
+  getParentRoute: () => AppMonthRoute,
+} as any)
+const AppMonthOverviewRoute = AppMonthOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AppMonthRoute,
+} as any)
+const AppMonthGoalsRoute = AppMonthGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AppMonthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/app/month': typeof AppMonthRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/app/month': typeof AppMonthRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,14 +85,42 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/app/month': typeof AppMonthRoute
+  '/app/month': typeof AppMonthRouteWithChildren
+  '/app/month/goals': typeof AppMonthGoalsRoute
+  '/app/month/overview': typeof AppMonthOverviewRoute
+  '/app/month/transits': typeof AppMonthTransitsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/login' | '/register' | '/app/month'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/month'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/login' | '/register' | '/app/month'
-  id: '__root__' | '/' | '/app' | '/login' | '/register' | '/app/month'
+  to:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/month'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/month'
+    | '/app/month/goals'
+    | '/app/month/overview'
+    | '/app/month/transits'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -115,15 +167,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMonthRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/month/transits': {
+      id: '/app/month/transits'
+      path: '/transits'
+      fullPath: '/app/month/transits'
+      preLoaderRoute: typeof AppMonthTransitsRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
+    '/app/month/overview': {
+      id: '/app/month/overview'
+      path: '/overview'
+      fullPath: '/app/month/overview'
+      preLoaderRoute: typeof AppMonthOverviewRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
+    '/app/month/goals': {
+      id: '/app/month/goals'
+      path: '/goals'
+      fullPath: '/app/month/goals'
+      preLoaderRoute: typeof AppMonthGoalsRouteImport
+      parentRoute: typeof AppMonthRoute
+    }
   }
 }
 
+interface AppMonthRouteChildren {
+  AppMonthGoalsRoute: typeof AppMonthGoalsRoute
+  AppMonthOverviewRoute: typeof AppMonthOverviewRoute
+  AppMonthTransitsRoute: typeof AppMonthTransitsRoute
+}
+
+const AppMonthRouteChildren: AppMonthRouteChildren = {
+  AppMonthGoalsRoute: AppMonthGoalsRoute,
+  AppMonthOverviewRoute: AppMonthOverviewRoute,
+  AppMonthTransitsRoute: AppMonthTransitsRoute,
+}
+
+const AppMonthRouteWithChildren = AppMonthRoute._addFileChildren(
+  AppMonthRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppMonthRoute: typeof AppMonthRoute
+  AppMonthRoute: typeof AppMonthRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppMonthRoute: AppMonthRoute,
+  AppMonthRoute: AppMonthRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -137,3 +226,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
