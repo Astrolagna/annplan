@@ -99,9 +99,10 @@ function DayPage() {
 
   async function addTask() {
     if (!user || !draft.trim()) return;
+    const nextSortOrder = tasks.length > 0 ? Math.max(...tasks.map(t => t.sort_order)) + 1 : 0;
     const { data } = await supabase
       .from("tasks")
-      .insert({ user_id: user.id, date, title: draft.trim(), sort_order: Date.now() })
+      .insert({ user_id: user.id, date, title: draft.trim(), sort_order: nextSortOrder })
       .select()
       .single();
     if (data) {
