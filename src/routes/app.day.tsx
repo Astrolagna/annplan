@@ -9,7 +9,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { addDays, formatLong, fromISO, toISO, todayISO, RU_WEEKDAYS_FULL } from "@/lib/date-utils";
-import { type AstroEvent, DAY_COLOR_BG, DAY_COLOR_LABEL, dominantColor, eventIcon } from "@/lib/astro";
+import {
+  type AstroEvent,
+  type Planet,
+  DAY_COLOR_BG,
+  DAY_COLOR_LABEL,
+  PLANETS,
+  PLANET_GLYPH,
+  PLANET_RU,
+  currentPositions,
+  dominantColor,
+  eventIcon,
+  signRu,
+} from "@/lib/astro";
 import { useAutoSave, statusLabel } from "@/lib/use-autosave";
 
 const searchSchema = z.object({
@@ -38,6 +50,7 @@ function DayPage() {
   const weekdayIdx = (d.getDay() + 6) % 7;
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
+  const [positions, setPositions] = useState<Partial<Record<Planet, string>>>({});
   const [tasks, setTasks] = useState<Task[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
@@ -47,13 +60,22 @@ function DayPage() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, tRes, nRes] = await Promise.all([
+      // Look back 800 days to safely capture latest ingress for slow planets (Jupiter+).
+      const lookbackFrom = toISO(addDays(fromISO(date), -800));
+      const [evRes, ingRes, tRes, nRes] = await Promise.all([
         supabase.from("astro_events").select("*").eq("date", date).order("event_type"),
+        supabase
+          .from("astro_events")
+          .select("planet,sign,date")
+          .eq("event_type", "ingress")
+          .gte("date", lookbackFrom)
+          .lte("date", date),
         supabase.from("tasks").select("*").eq("user_id", user.id).eq("date", date).is("time_slot", null).order("sort_order"),
         supabase.from("notes").select("content").eq("user_id", user.id).eq("date", date).maybeSingle(),
       ]);
       if (cancelled) return;
       setEvents((evRes.data ?? []) as AstroEvent[]);
+      setPositions(currentPositions((ingRes.data ?? []) as Array<{ planet: string | null; sign: string | null; date: string }>, date));
       setTasks((tRes.data ?? []) as Task[]);
       setNote(nRes.data?.content ?? "");
     })();
@@ -144,6 +166,23 @@ function DayPage() {
               Сегодня без отмеченных транзитов — спокойное поле дня.
             </div>
           )}
+
+          <div className="space-y-3 pt-2">
+            <h3 className="text-sm uppercase tracking-wider text-muted-foreground font-sans">Положение планет</h3>
+            <ul className="grid grid-cols-1 gap-1.5">
+              {PLANETS.map(p => {
+                const sign = positions[p];
+                if (!sign) return null;
+                return (
+                  <li key={p} className="flex items-baseline gap-2 text-sm">
+                    <span className="text-base w-5 text-muted-foreground shrink-0" aria-hidden>{PLANET_GLYPH[p]}</span>
+                    <span className="text-muted-foreground">{PLANET_RU[p]}</span>
+                    <span className="text-foreground">— {signRu(sign)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
           {events.length > 0 && (
             <div className="space-y-3 pt-2">
