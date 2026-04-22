@@ -138,6 +138,23 @@ function WeekPlan() {
           );
         })}
 
+        {/* Notes row */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          заметки
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          return (
+            <div key={"note-" + iso} className="border-r border-b border-border last:border-r-0 p-1">
+              <AutoGrowNote
+                value={notes[iso] ?? ""}
+                onChange={v => setNotes(n => ({ ...n, [iso]: v }))}
+                onBlur={v => saveNote(iso, v)}
+              />
+            </div>
+          );
+        })}
+
         {/* Time slots */}
         {SLOTS.map(slot => (
           <FragmentRow key={slot}>
