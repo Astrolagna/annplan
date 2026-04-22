@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -33,7 +33,14 @@ export const Route = createFileRoute("/app/month/overview")({
   component: MonthOverview,
 });
 
-type Note = { date: string; content: string };
+type Task = {
+  id: string;
+  date: string;
+  title: string;
+  is_done: boolean;
+  sort_order: number;
+  time_slot: string | null;
+};
 
 function MonthOverview() {
   const search = Route.useSearch();
@@ -50,56 +57,109 @@ function MonthOverview() {
   const lastISO = toISO(grid[grid.length - 1]);
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [tasksByDate, setTasksByDate] = useState<Record<string, Task[]>>({});
+  // Local draft text per date: only pending (not done) tasks, one per line.
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const { status, run } = useAutoSave();
+
+  async function reloadTasks() {
+    if (!user) {
+      setTasksByDate({});
+      setDrafts({});
+      return;
+    }
+    const { data } = await supabase
+      .from("tasks")
+      .select("id,date,title,is_done,sort_order,time_slot")
+      .eq("user_id", user.id)
+      .gte("date", firstISO)
+      .lte("date", lastISO)
+      .order("sort_order");
+    const grouped: Record<string, Task[]> = {};
+    for (const t of (data as Task[] | null) ?? []) {
+      (grouped[t.date] ||= []).push(t);
+    }
+    setTasksByDate(grouped);
+    const d: Record<string, string> = {};
+    for (const [date, list] of Object.entries(grouped)) {
+      d[date] = list
+        .filter(t => !t.is_done && !t.time_slot)
+        .map(t => t.title)
+        .join("\n");
+    }
+    setDrafts(d);
+  }
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [evRes, noteRes] = await Promise.all([
-        supabase
-          .from("astro_events")
-          .select("*")
-          .gte("date", firstISO)
-          .lte("date", lastISO)
-          .order("date"),
-        user
-          ? supabase
-              .from("notes")
-              .select("date,content")
-              .eq("user_id", user.id)
-              .gte("date", firstISO)
-              .lte("date", lastISO)
-          : Promise.resolve({ data: [] as Note[], error: null }),
-      ]);
+      const evRes = await supabase
+        .from("astro_events")
+        .select("*")
+        .gte("date", firstISO)
+        .lte("date", lastISO)
+        .order("date");
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
-      const m: Record<string, string> = {};
-      for (const n of (noteRes.data as Note[] | null) ?? []) m[n.date] = n.content;
-      setNotes(m);
+      await reloadTasks();
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstISO, lastISO, user]);
 
   const byDate = useMemo(() => groupByDate(events), [events]);
 
-  async function saveNote(date: string, content: string) {
+  // Diff drafts vs existing pending tasks; create/update/delete accordingly.
+  async function syncTasks(date: string, text: string) {
     if (!user) return;
     setActiveDate(date);
     await run(async () => {
-      const trimmed = content.trim();
-      if (trimmed === "") {
-        const { error } = await supabase.from("notes").delete().eq("user_id", user.id).eq("date", date);
+      const lines = text.split("\n").map(s => s.trim()).filter(Boolean);
+      const existing = (tasksByDate[date] ?? []).filter(t => !t.is_done && !t.time_slot);
+
+      const toUpdate: { id: string; title: string; sort_order: number }[] = [];
+      const toInsert: { user_id: string; date: string; title: string; sort_order: number }[] = [];
+      const usedIds = new Set<string>();
+
+      lines.forEach((title, idx) => {
+        const match = existing.find(t => !usedIds.has(t.id) && t.title === title);
+        if (match) {
+          usedIds.add(match.id);
+          if (match.sort_order !== idx) {
+            toUpdate.push({ id: match.id, title, sort_order: idx });
+          }
+        } else {
+          // Reuse a free slot if any (treat as rename) — preserves ids on edits.
+          const free = existing.find(t => !usedIds.has(t.id));
+          if (free) {
+            usedIds.add(free.id);
+            toUpdate.push({ id: free.id, title, sort_order: idx });
+          } else {
+            toInsert.push({ user_id: user.id, date, title, sort_order: idx });
+          }
+        }
+      });
+
+      const toDelete = existing.filter(t => !usedIds.has(t.id)).map(t => t.id);
+
+      if (toDelete.length) {
+        const { error } = await supabase.from("tasks").delete().in("id", toDelete);
         if (error) throw error;
-      } else {
-        const { error } = await supabase.from("notes").upsert(
-          { user_id: user.id, date, content: trimmed },
-          { onConflict: "user_id,date" },
-        );
+      }
+      for (const u of toUpdate) {
+        const { error } = await supabase
+          .from("tasks")
+          .update({ title: u.title, sort_order: u.sort_order })
+          .eq("id", u.id);
+        if (error) throw error;
+      }
+      if (toInsert.length) {
+        const { error } = await supabase.from("tasks").insert(toInsert);
         if (error) throw error;
       }
     });
+    await reloadTasks();
   }
 
   return (
@@ -119,6 +179,8 @@ function MonthOverview() {
             const dayEvents = byDate[iso] ?? [];
             const color = dominantColor(dayEvents);
             const today = isToday(d);
+            const dayTasks = tasksByDate[iso] ?? [];
+            const doneTasks = dayTasks.filter(t => t.is_done && !t.time_slot);
             return (
               <div
                 key={idx}
@@ -174,12 +236,24 @@ function MonthOverview() {
                   )}
                 </Tooltip>
 
+                {inMonth && doneTasks.length > 0 && (
+                  <ul className="space-y-0.5">
+                    {doneTasks.map(t => (
+                      <li key={t.id} className="flex items-center gap-1 text-[11px] leading-tight text-muted-foreground line-through px-1.5">
+                        <Check className="w-2.5 h-2.5 shrink-0" />
+                        <span className="truncate">{t.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 {inMonth && (
                   <AutoGrowNote
-                    value={notes[iso] ?? ""}
-                    onChange={v => setNotes(n => ({ ...n, [iso]: v }))}
+                    value={drafts[iso] ?? ""}
+                    onChange={v => setDrafts(n => ({ ...n, [iso]: v }))}
                     onFocus={() => setActiveDate(iso)}
-                    onBlur={v => saveNote(iso, v)}
+                    onBlur={v => syncTasks(iso, v)}
+                    placeholder="задача…"
                     className="mt-auto"
                   />
                 )}
@@ -218,6 +292,7 @@ function Legend() {
         <span>℞ ретроград</span>
         <span>→ переход в знак</span>
       </span>
+      <span className="ml-2 italic">Каждая строка = задача в Дне</span>
     </div>
   );
 }

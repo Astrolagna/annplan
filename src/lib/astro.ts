@@ -60,3 +60,73 @@ export function groupByDate(events: AstroEvent[]): Record<string, AstroEvent[]> 
   }
   return map;
 }
+
+// ---------- Planetary positions ----------
+
+export const PLANETS = [
+  "sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "rahu", "ketu",
+] as const;
+export type Planet = typeof PLANETS[number];
+
+export const PLANET_RU: Record<Planet, string> = {
+  sun: "Солнце",
+  moon: "Луна",
+  mercury: "Меркурий",
+  venus: "Венера",
+  mars: "Марс",
+  jupiter: "Юпитер",
+  saturn: "Сатурн",
+  rahu: "Раху",
+  ketu: "Кету",
+};
+
+export const PLANET_GLYPH: Record<Planet, string> = {
+  sun: "☉",
+  moon: "☽",
+  mercury: "☿",
+  venus: "♀",
+  mars: "♂",
+  jupiter: "♃",
+  saturn: "♄",
+  rahu: "☊",
+  ketu: "☋",
+};
+
+export const SIGN_RU: Record<string, string> = {
+  aries: "Овен",
+  taurus: "Телец",
+  gemini: "Близнецы",
+  cancer: "Рак",
+  leo: "Лев",
+  virgo: "Дева",
+  libra: "Весы",
+  scorpio: "Скорпион",
+  sagittarius: "Стрелец",
+  capricorn: "Козерог",
+  aquarius: "Водолей",
+  pisces: "Рыбы",
+};
+
+export function signRu(sign: string | null | undefined): string {
+  if (!sign) return "—";
+  return SIGN_RU[sign.toLowerCase()] ?? sign;
+}
+
+// Given ingress events with date <= onDate, return the latest sign per planet.
+export function currentPositions(
+  ingresses: Array<{ planet: string | null; sign: string | null; date: string }>,
+  onDate: string,
+): Partial<Record<Planet, string>> {
+  const result: Partial<Record<Planet, string>> = {};
+  // Sort descending by date so first match per planet wins.
+  const sorted = [...ingresses]
+    .filter(e => e.date <= onDate && e.planet && e.sign)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  for (const e of sorted) {
+    const p = e.planet as Planet;
+    if (!PLANETS.includes(p)) continue;
+    if (result[p]) continue;
+    result[p] = e.sign as string;
+  }
+  return result;
+}
