@@ -180,6 +180,7 @@ function MonthOverview() {
                     onChange={v => setNotes(n => ({ ...n, [iso]: v }))}
                     onFocus={() => setActiveDate(iso)}
                     onBlur={v => saveNote(iso, v)}
+                    className="mt-auto"
                   />
                 )}
                 {activeDate === iso && status !== "idle" && (
