@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { AutoGrowNote } from "@/components/auto-grow-note";
 import {
   RU_WEEKDAYS_SHORT,
   fromISO,
@@ -34,6 +35,8 @@ type Task = {
   sort_order: number;
 };
 
+type Note = { date: string; content: string };
+
 function WeekPlan() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -45,21 +48,39 @@ function WeekPlan() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, taskRes] = await Promise.all([
+      const [evRes, taskRes, noteRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", first).lte("date", last),
         supabase.from("tasks").select("*").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
+        supabase.from("notes").select("date,content").eq("user_id", user.id).gte("date", first).lte("date", last),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
       if (taskRes.data) setTasks(taskRes.data as Task[]);
+      const m: Record<string, string> = {};
+      for (const n of (noteRes.data as Note[] | null) ?? []) m[n.date] = n.content;
+      setNotes(m);
     })();
     return () => { cancelled = true; };
   }, [user, first, last]);
+
+  async function saveNote(day: string, content: string) {
+    if (!user) return;
+    const trimmed = content.trim();
+    if (trimmed === "") {
+      await supabase.from("notes").delete().eq("user_id", user.id).eq("date", day);
+    } else {
+      await supabase.from("notes").upsert(
+        { user_id: user.id, date: day, content: trimmed },
+        { onConflict: "user_id,date" },
+      );
+    }
+  }
 
   const byDate = groupByDate(events);
 
@@ -114,6 +135,23 @@ function WeekPlan() {
                 </div>
               </div>
             </button>
+          );
+        })}
+
+        {/* Notes row */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          заметки
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          return (
+            <div key={"note-" + iso} className="border-r border-b border-border last:border-r-0 p-1">
+              <AutoGrowNote
+                value={notes[iso] ?? ""}
+                onChange={v => setNotes(n => ({ ...n, [iso]: v }))}
+                onBlur={v => saveNote(iso, v)}
+              />
+            </div>
           );
         })}
 
