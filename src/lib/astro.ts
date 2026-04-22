@@ -112,21 +112,79 @@ export function signRu(sign: string | null | undefined): string {
   return SIGN_RU[sign.toLowerCase()] ?? sign;
 }
 
-// Given ingress events with date <= onDate, return the latest sign per planet.
+// Zodiac order (Western tropical / Vedic forward).
+export const ZODIAC = [
+  "aries", "taurus", "gemini", "cancer", "leo", "virgo",
+  "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+] as const;
+
+// Rahu/Ketu move retrograde through the zodiac (backward).
+const REVERSE_PLANETS = new Set<Planet>(["rahu", "ketu"]);
+
+function previousSign(planet: Planet, sign: string): string {
+  const idx = ZODIAC.indexOf(sign.toLowerCase() as typeof ZODIAC[number]);
+  if (idx < 0) return sign;
+  // For Rahu/Ketu (moving backward), the "previous" sign in time is the NEXT zodiac sign.
+  const delta = REVERSE_PLANETS.has(planet) ? 1 : -1;
+  const prev = (idx + delta + 12) % 12;
+  return ZODIAC[prev];
+}
+
+// Given ingress events, return the sign each planet is in on `onDate`.
+// Falls back to the sign preceding the first known future ingress when no past data exists.
 export function currentPositions(
   ingresses: Array<{ planet: string | null; sign: string | null; date: string }>,
   onDate: string,
 ): Partial<Record<Planet, string>> {
   const result: Partial<Record<Planet, string>> = {};
-  // Sort descending by date so first match per planet wins.
-  const sorted = [...ingresses]
+  const past = [...ingresses]
     .filter(e => e.date <= onDate && e.planet && e.sign)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
-  for (const e of sorted) {
+  for (const e of past) {
     const p = e.planet as Planet;
     if (!PLANETS.includes(p)) continue;
     if (result[p]) continue;
     result[p] = e.sign as string;
+  }
+  // Fallback: planets without past ingress — use sign before earliest future ingress.
+  const future = [...ingresses]
+    .filter(e => e.date > onDate && e.planet && e.sign)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  for (const e of future) {
+    const p = e.planet as Planet;
+    if (!PLANETS.includes(p)) continue;
+    if (result[p]) continue;
+    result[p] = previousSign(p, e.sign as string);
+  }
+  return result;
+}
+
+// Determine which planets are currently retrograde on `onDate`.
+// Heuristic: a planet is retrograde if its most recent retrograde-start event
+// is more recent than its most recent ingress (i.e. retrograde began and the
+// planet hasn't yet moved into a new sign — typical retro window).
+export function retrogradePlanets(
+  events: Array<{ planet: string | null; event_type: string; date: string }>,
+  onDate: string,
+): Set<Planet> {
+  const lastRetro: Partial<Record<Planet, string>> = {};
+  const lastIngress: Partial<Record<Planet, string>> = {};
+  for (const e of events) {
+    if (!e.planet || e.date > onDate) continue;
+    const p = e.planet as Planet;
+    if (!PLANETS.includes(p)) continue;
+    if (e.event_type === "retrograde") {
+      if (!lastRetro[p] || e.date > lastRetro[p]!) lastRetro[p] = e.date;
+    } else if (e.event_type === "ingress") {
+      if (!lastIngress[p] || e.date > lastIngress[p]!) lastIngress[p] = e.date;
+    }
+  }
+  const result = new Set<Planet>();
+  for (const p of PLANETS) {
+    const r = lastRetro[p];
+    if (!r) continue;
+    const i = lastIngress[p];
+    if (!i || r > i) result.add(p);
   }
   return result;
 }
