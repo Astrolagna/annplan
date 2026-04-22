@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { ArrowRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { Textarea } from "@/components/ui/textarea";
+import { AutoGrowNote } from "@/components/auto-grow-note";
 import { useAutoSave, statusLabel } from "@/lib/use-autosave";
 import {
   RU_WEEKDAYS_SHORT,
@@ -193,39 +193,6 @@ function MonthOverview() {
 
       <Legend />
     </TooltipProvider>
-  );
-}
-
-function AutoGrowNote({
-  value,
-  onChange,
-  onFocus,
-  onBlur,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onFocus: () => void;
-  onBlur: (v: string) => void;
-}) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = el.scrollHeight + "px";
-  }, [value]);
-
-  return (
-    <Textarea
-      ref={ref}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      onFocus={onFocus}
-      onBlur={e => onBlur(e.target.value)}
-      placeholder="заметка…"
-      className="mt-auto h-auto text-xs leading-tight bg-muted/30 border-0 shadow-none px-1.5 py-1 resize-none overflow-hidden focus-visible:ring-1 focus-visible:bg-card"
-    />
   );
 }
 
