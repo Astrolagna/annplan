@@ -123,7 +123,7 @@ function MonthOverview() {
               <div
                 key={idx}
                 className={
-                  "min-h-[130px] sm:min-h-[140px] border-r border-b border-border last:border-r-0 p-2 flex flex-col gap-1 transition-colors group " +
+                  "min-h-[140px] border-r border-b border-border last:border-r-0 p-2 flex flex-col gap-1 transition-colors group " +
                   (inMonth ? "bg-card" : "bg-muted/20 text-muted-foreground")
                 }
               >
@@ -175,14 +175,11 @@ function MonthOverview() {
                 </Tooltip>
 
                 {inMonth && (
-                  <Textarea
+                  <AutoGrowNote
                     value={notes[iso] ?? ""}
-                    onChange={e => setNotes(n => ({ ...n, [iso]: e.target.value }))}
+                    onChange={v => setNotes(n => ({ ...n, [iso]: v }))}
                     onFocus={() => setActiveDate(iso)}
-                    onBlur={e => saveNote(iso, e.target.value)}
-                    placeholder="заметка…"
-                    rows={2}
-                    className="mt-auto min-h-[44px] text-xs leading-tight bg-muted/30 border-0 shadow-none px-1.5 py-1 resize-none focus-visible:ring-1 focus-visible:bg-card"
+                    onBlur={v => saveNote(iso, v)}
                   />
                 )}
                 {activeDate === iso && status !== "idle" && (
@@ -196,6 +193,39 @@ function MonthOverview() {
 
       <Legend />
     </TooltipProvider>
+  );
+}
+
+function AutoGrowNote({
+  value,
+  onChange,
+  onFocus,
+  onBlur,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onFocus: () => void;
+  onBlur: (v: string) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [value]);
+
+  return (
+    <Textarea
+      ref={ref}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      onFocus={onFocus}
+      onBlur={e => onBlur(e.target.value)}
+      placeholder="заметка…"
+      className="mt-auto h-auto text-xs leading-tight bg-muted/30 border-0 shadow-none px-1.5 py-1 resize-none overflow-hidden focus-visible:ring-1 focus-visible:bg-card"
+    />
   );
 }
 
