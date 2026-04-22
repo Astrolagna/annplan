@@ -34,6 +34,8 @@ export function eventIcon(ev: { event_type: string }): string {
   switch (ev.event_type) {
     case "new_moon": return "🌑";
     case "full_moon": return "🌕";
+    case "solar_eclipse": return "🌚";
+    case "lunar_eclipse": return "🌝";
     case "retrograde":
     case "retrograde_start":
     case "retrograde_end": return "℞";
