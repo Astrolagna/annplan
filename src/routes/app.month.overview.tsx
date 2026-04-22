@@ -37,7 +37,6 @@ type Note = { date: string; content: string };
 
 function MonthOverview() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const now = new Date();
@@ -52,7 +51,8 @@ function MonthOverview() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [savingDate, setSavingDate] = useState<string | null>(null);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const { status, run } = useAutoSave();
 
   useEffect(() => {
     let cancelled = false;
