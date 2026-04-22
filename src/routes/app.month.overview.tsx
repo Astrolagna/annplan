@@ -1,9 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { ArrowRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { Textarea } from "@/components/ui/textarea";
+import { useAutoSave, statusLabel } from "@/lib/use-autosave";
 import {
   RU_WEEKDAYS_SHORT,
   monthGrid,
@@ -34,7 +37,6 @@ type Note = { date: string; content: string };
 
 function MonthOverview() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const now = new Date();
@@ -49,7 +51,8 @@ function MonthOverview() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [savingDate, setSavingDate] = useState<string | null>(null);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const { status, run } = useAutoSave();
 
   useEffect(() => {
     let cancelled = false;
@@ -83,17 +86,20 @@ function MonthOverview() {
 
   async function saveNote(date: string, content: string) {
     if (!user) return;
-    setSavingDate(date);
-    const trimmed = content.trim();
-    if (trimmed === "") {
-      await supabase.from("notes").delete().eq("user_id", user.id).eq("date", date);
-    } else {
-      await supabase.from("notes").upsert(
-        { user_id: user.id, date, content: trimmed },
-        { onConflict: "user_id,date" },
-      );
-    }
-    setSavingDate(null);
+    setActiveDate(date);
+    await run(async () => {
+      const trimmed = content.trim();
+      if (trimmed === "") {
+        const { error } = await supabase.from("notes").delete().eq("user_id", user.id).eq("date", date);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("notes").upsert(
+          { user_id: user.id, date, content: trimmed },
+          { onConflict: "user_id,date" },
+        );
+        if (error) throw error;
+      }
+    });
   }
 
   return (
@@ -117,15 +123,9 @@ function MonthOverview() {
               <div
                 key={idx}
                 className={
-                  "min-h-[110px] sm:min-h-[120px] border-r border-b border-border last:border-r-0 p-2 flex flex-col gap-1 cursor-pointer transition-colors hover:bg-muted/30 " +
+                  "min-h-[130px] sm:min-h-[140px] border-r border-b border-border last:border-r-0 p-2 flex flex-col gap-1 transition-colors group " +
                   (inMonth ? "bg-card" : "bg-muted/20 text-muted-foreground")
                 }
-                onClick={(e) => {
-                  // Only navigate if not clicking the input
-                  if ((e.target as HTMLElement).tagName !== "INPUT") {
-                    navigate({ to: "/app/day", search: { date: iso } });
-                  }
-                }}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -147,6 +147,16 @@ function MonthOverview() {
                             {eventIcon(ev)}
                           </span>
                         ))}
+                        {inMonth && (
+                          <Link
+                            to="/app/day"
+                            search={{ date: iso }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            aria-label="Открыть день"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </TooltipTrigger>
@@ -165,17 +175,18 @@ function MonthOverview() {
                 </Tooltip>
 
                 {inMonth && (
-                  <input
+                  <Textarea
                     value={notes[iso] ?? ""}
                     onChange={e => setNotes(n => ({ ...n, [iso]: e.target.value }))}
+                    onFocus={() => setActiveDate(iso)}
                     onBlur={e => saveNote(iso, e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                    placeholder="заметка"
-                    className="mt-auto bg-transparent text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-muted/40 rounded px-1 py-0.5 transition-colors"
+                    placeholder="заметка…"
+                    rows={2}
+                    className="mt-auto min-h-[44px] text-xs leading-tight bg-muted/30 border-0 shadow-none px-1.5 py-1 resize-none focus-visible:ring-1 focus-visible:bg-card"
                   />
                 )}
-                {savingDate === iso && (
-                  <span className="text-[10px] text-muted-foreground italic">сохранение…</span>
+                {activeDate === iso && status !== "idle" && (
+                  <span className="text-[10px] text-muted-foreground italic">{statusLabel(status)}</span>
                 )}
               </div>
             );
