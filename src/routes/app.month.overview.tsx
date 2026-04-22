@@ -1,9 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { ArrowRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { Textarea } from "@/components/ui/textarea";
+import { useAutoSave, statusLabel } from "@/lib/use-autosave";
 import {
   RU_WEEKDAYS_SHORT,
   monthGrid,
