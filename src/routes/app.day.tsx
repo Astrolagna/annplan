@@ -20,6 +20,7 @@ import {
   currentPositions,
   dominantColor,
   eventIcon,
+  retrogradePlanets,
   signRu,
 } from "@/lib/astro";
 import { useAutoSave, statusLabel } from "@/lib/use-autosave";
@@ -51,6 +52,7 @@ function DayPage() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [positions, setPositions] = useState<Partial<Record<Planet, string>>>({});
+  const [retro, setRetro] = useState<Set<Planet>>(new Set());
   const [tasks, setTasks] = useState<Task[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
@@ -60,14 +62,22 @@ function DayPage() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      // Look back 800 days to safely capture latest ingress for slow planets (Jupiter+).
+      // Wide lookback for slow planets (Jupiter ~12y cycle, Saturn ~30y, Rahu/Ketu ~18y).
+      // Also look forward to support fallback for planets with no past ingress in dataset.
       const lookbackFrom = toISO(addDays(fromISO(date), -800));
-      const [evRes, ingRes, tRes, nRes] = await Promise.all([
+      const lookforwardTo = toISO(addDays(fromISO(date), 800));
+      const [evRes, ingRes, retroRes, tRes, nRes] = await Promise.all([
         supabase.from("astro_events").select("*").eq("date", date).order("event_type"),
         supabase
           .from("astro_events")
           .select("planet,sign,date")
           .eq("event_type", "ingress")
+          .gte("date", lookbackFrom)
+          .lte("date", lookforwardTo),
+        supabase
+          .from("astro_events")
+          .select("planet,event_type,date")
+          .in("event_type", ["retrograde", "ingress"])
           .gte("date", lookbackFrom)
           .lte("date", date),
         supabase.from("tasks").select("*").eq("user_id", user.id).eq("date", date).is("time_slot", null).order("sort_order"),
@@ -76,6 +86,7 @@ function DayPage() {
       if (cancelled) return;
       setEvents((evRes.data ?? []) as AstroEvent[]);
       setPositions(currentPositions((ingRes.data ?? []) as Array<{ planet: string | null; sign: string | null; date: string }>, date));
+      setRetro(retrogradePlanets((retroRes.data ?? []) as Array<{ planet: string | null; event_type: string; date: string }>, date));
       setTasks((tRes.data ?? []) as Task[]);
       setNote(nRes.data?.content ?? "");
     })();
@@ -173,11 +184,20 @@ function DayPage() {
               {PLANETS.map(p => {
                 const sign = positions[p];
                 if (!sign) return null;
+                const isRetro = retro.has(p);
                 return (
                   <li key={p} className="flex items-baseline gap-2 text-sm">
                     <span className="text-base w-5 text-muted-foreground shrink-0" aria-hidden>{PLANET_GLYPH[p]}</span>
                     <span className="text-muted-foreground">{PLANET_RU[p]}</span>
                     <span className="text-foreground">— {signRu(sign)}</span>
+                    {isRetro && (
+                      <span
+                        className="ml-1 text-xs font-medium text-[var(--color-day-pink)] tracking-wide"
+                        title="Ретроград"
+                      >
+                        ℞ ретро
+                      </span>
+                    )}
                   </li>
                 );
               })}
