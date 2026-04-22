@@ -184,11 +184,20 @@ function DayPage() {
               {PLANETS.map(p => {
                 const sign = positions[p];
                 if (!sign) return null;
+                const isRetro = retro.has(p);
                 return (
                   <li key={p} className="flex items-baseline gap-2 text-sm">
                     <span className="text-base w-5 text-muted-foreground shrink-0" aria-hidden>{PLANET_GLYPH[p]}</span>
                     <span className="text-muted-foreground">{PLANET_RU[p]}</span>
                     <span className="text-foreground">— {signRu(sign)}</span>
+                    {isRetro && (
+                      <span
+                        className="ml-1 text-xs font-medium text-[var(--color-day-pink)] tracking-wide"
+                        title="Ретроград"
+                      >
+                        ℞ ретро
+                      </span>
+                    )}
                   </li>
                 );
               })}
