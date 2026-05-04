@@ -12,6 +12,23 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+function translateAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    return "Неверный email или пароль. Если регистрировались через Google — войдите через Google.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "Email ещё не подтверждён. Проверьте почту и перейдите по ссылке из письма.";
+  }
+  if (m.includes("too many requests") || m.includes("rate limit")) {
+    return "Слишком много попыток. Попробуйте через минуту.";
+  }
+  if (m.includes("network")) {
+    return "Проблема с сетью. Проверьте соединение и попробуйте снова.";
+  }
+  return message;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -26,17 +43,22 @@ function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
-    if (error) toast.error(error.message);
-    else navigate({ to: "/app" });
+    if (error) {
+      toast.error(translateAuthError(error.message));
+      return;
+    }
+    if (data.session) {
+      navigate({ to: "/app" });
+    }
   }
 
   async function onGoogle() {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/app`,
     });
-    if (result.error) toast.error(result.error.message);
+    if (result.error) toast.error(translateAuthError(result.error.message));
   }
 
   return (
@@ -53,11 +75,16 @@ function LoginPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
+            <Input id="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pwd">Пароль</Label>
-            <Input id="pwd" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="pwd">Пароль</Label>
+              <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
+                Забыли пароль?
+              </Link>
+            </div>
+            <Input id="pwd" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} />
           </div>
           <Button type="submit" className="w-full rounded-xl" disabled={submitting}>
             {submitting ? "Вход…" : "Войти"}

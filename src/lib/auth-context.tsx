@@ -20,10 +20,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          // Stale / invalid refresh token in storage — clear it so we don't
+          // get stuck in a loading state on next mount.
+          console.warn("Auth getSession error, signing out:", error.message);
+          supabase.auth.signOut().catch(() => {});
+          setSession(null);
+        } else {
+          setSession(data.session);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setSession(null);
+        setLoading(false);
+      });
+
     return () => sub.subscription.unsubscribe();
   }, []);
 
