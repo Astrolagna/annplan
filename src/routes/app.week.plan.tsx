@@ -14,6 +14,7 @@ import {
   isToday,
 } from "@/lib/date-utils";
 import { type AstroEvent, dominantColor, groupByDate, DAY_COLOR_BG, eventIcon } from "@/lib/astro";
+import { SOCIAL_MAP } from "@/lib/socials";
 
 const searchSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
