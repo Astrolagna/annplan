@@ -96,14 +96,25 @@ function MonthOverview() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const evRes = await supabase
-        .from("astro_events")
-        .select("*")
-        .gte("date", firstISO)
-        .lte("date", lastISO)
-        .order("date");
+      const [evRes, piRes, pRes] = await Promise.all([
+        supabase.from("astro_events").select("*").gte("date", firstISO).lte("date", lastISO).order("date"),
+        user
+          ? supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", firstISO).lte("due_date", lastISO)
+          : Promise.resolve({ data: [] as Array<{ id: string; project_id: string; title: string; is_done: boolean; due_date: string }> }),
+        user
+          ? supabase.from("projects").select("id,title").eq("user_id", user.id)
+          : Promise.resolve({ data: [] as Array<{ id: string; title: string }> }),
+      ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
+      const piGrouped: Record<string, Array<{ id: string; project_id: string; title: string; is_done: boolean }>> = {};
+      for (const it of (piRes.data ?? []) as Array<{ id: string; project_id: string; title: string; is_done: boolean; due_date: string }>) {
+        (piGrouped[it.due_date] ||= []).push({ id: it.id, project_id: it.project_id, title: it.title, is_done: it.is_done });
+      }
+      setProjectItemsByDate(piGrouped);
+      const pMap: Record<string, string> = {};
+      for (const p of (pRes.data ?? []) as Array<{ id: string; title: string }>) pMap[p.id] = p.title;
+      setProjects(pMap);
       await reloadTasks();
     })();
     return () => { cancelled = true; };
