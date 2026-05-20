@@ -24,6 +24,7 @@ import {
   signRu,
 } from "@/lib/astro";
 import { useAutoSave, statusLabel } from "@/lib/use-autosave";
+import { PostEditor, type ContentPost } from "@/routes/app.content";
 
 const searchSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
