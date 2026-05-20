@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWeekRouteImport } from './routes/app.week'
+import { Route as AppProjectsRouteImport } from './routes/app.projects'
 import { Route as AppMonthRouteImport } from './routes/app.month'
 import { Route as AppDayRouteImport } from './routes/app.day'
 import { Route as AppWeekTransitsRouteImport } from './routes/app.week.transits'
@@ -57,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppWeekRoute = AppWeekRouteImport.update({
   id: '/week',
   path: '/week',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsRoute = AppProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMonthRoute = AppMonthRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/projects': typeof AppProjectsRoute
   '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/projects': typeof AppProjectsRoute
   '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
+  '/app/projects': typeof AppProjectsRoute
   '/app/week': typeof AppWeekRouteWithChildren
   '/app/month/goals': typeof AppMonthGoalsRoute
   '/app/month/overview': typeof AppMonthOverviewRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/app/day'
     | '/app/month'
+    | '/app/projects'
     | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/app/day'
     | '/app/month'
+    | '/app/projects'
     | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/app/day'
     | '/app/month'
+    | '/app/projects'
     | '/app/week'
     | '/app/month/goals'
     | '/app/month/overview'
@@ -253,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/week'
       fullPath: '/app/week'
       preLoaderRoute: typeof AppWeekRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/projects': {
+      id: '/app/projects'
+      path: '/projects'
+      fullPath: '/app/projects'
+      preLoaderRoute: typeof AppProjectsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/month': {
@@ -339,12 +358,14 @@ const AppWeekRouteWithChildren =
 interface AppRouteChildren {
   AppDayRoute: typeof AppDayRoute
   AppMonthRoute: typeof AppMonthRouteWithChildren
+  AppProjectsRoute: typeof AppProjectsRoute
   AppWeekRoute: typeof AppWeekRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDayRoute: AppDayRoute,
   AppMonthRoute: AppMonthRouteWithChildren,
+  AppProjectsRoute: AppProjectsRoute,
   AppWeekRoute: AppWeekRouteWithChildren,
 }
 

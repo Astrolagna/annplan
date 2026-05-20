@@ -39,6 +39,7 @@ function AppLayout() {
     { label: "Месяц", to: "/app/month/overview", match: "/app/month" },
     { label: "Неделя", to: "/app/week/plan", match: "/app/week" },
     { label: "День", to: `/app/day?date=${today}`, match: "/app/day" },
+    { label: "Проекты", to: "/app/projects", match: "/app/projects" },
   ];
 
   async function signOut() {

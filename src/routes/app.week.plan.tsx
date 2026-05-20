@@ -37,6 +37,16 @@ type Task = {
 
 type Note = { date: string; content: string };
 
+type ProjectItem = {
+  id: string;
+  project_id: string;
+  title: string;
+  is_done: boolean;
+  due_date: string;
+};
+
+type ProjectLite = { id: string; title: string };
+
 function WeekPlan() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -49,15 +59,19 @@ function WeekPlan() {
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, taskRes, noteRes] = await Promise.all([
+      const [evRes, taskRes, noteRes, piRes, pRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", first).lte("date", last),
         supabase.from("tasks").select("*").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
         supabase.from("notes").select("date,content").eq("user_id", user.id).gte("date", first).lte("date", last),
+        supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", first).lte("due_date", last),
+        supabase.from("projects").select("id,title").eq("user_id", user.id),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
@@ -65,6 +79,8 @@ function WeekPlan() {
       const m: Record<string, string> = {};
       for (const n of (noteRes.data as Note[] | null) ?? []) m[n.date] = n.content;
       setNotes(m);
+      setProjectItems((piRes.data ?? []) as ProjectItem[]);
+      setProjects((pRes.data ?? []) as ProjectLite[]);
     })();
     return () => { cancelled = true; };
   }, [user, first, last]);
@@ -108,6 +124,14 @@ function WeekPlan() {
     setTasks(arr => arr.filter(x => x.id !== t.id));
     await supabase.from("tasks").delete().eq("id", t.id);
   }
+
+  async function toggleProjectItem(it: ProjectItem) {
+    const next = !it.is_done;
+    setProjectItems(arr => arr.map(x => (x.id === it.id ? { ...x, is_done: next } : x)));
+    await supabase.from("project_items").update({ is_done: next }).eq("id", it.id);
+  }
+
+  const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
 
   return (
     <div className="card-soft overflow-x-auto">
@@ -155,7 +179,31 @@ function WeekPlan() {
           );
         })}
 
-        {/* Time slots */}
+        {/* Project items row (all-day) */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          проекты
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          const dayItems = projectItems.filter(i => i.due_date === iso);
+          return (
+            <div key={"proj-" + iso} className="border-r border-b border-border last:border-r-0 p-1 flex flex-col gap-1 min-h-[28px]">
+              {dayItems.map(it => (
+                <button
+                  key={it.id}
+                  onClick={() => toggleProjectItem(it)}
+                  className={
+                    "text-left text-[11px] bg-primary/10 text-primary rounded px-1.5 py-0.5 hover:bg-primary/20 transition-colors " +
+                    (it.is_done ? "line-through opacity-60" : "")
+                  }
+                  title={projectTitle(it.project_id)}
+                >
+                  <span className="font-medium">{projectTitle(it.project_id)}:</span> {it.title}
+                </button>
+              ))}
+            </div>
+          );
+        })}
         {SLOTS.map(slot => (
           <FragmentRow key={slot}>
             <div className="border-r border-b border-border px-2 py-2 text-xs text-muted-foreground tabular-nums sticky left-0 bg-card">

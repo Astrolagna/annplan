@@ -42,6 +42,16 @@ type Task = {
   sort_order: number;
 };
 
+type ProjectItem = {
+  id: string;
+  project_id: string;
+  title: string;
+  is_done: boolean;
+  due_date: string | null;
+};
+
+type ProjectLite = { id: string; title: string };
+
 function DayPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -54,6 +64,8 @@ function DayPage() {
   const [positions, setPositions] = useState<Partial<Record<Planet, string>>>({});
   const [retro, setRetro] = useState<Set<Planet>>(new Set());
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
   const noteSave = useAutoSave();
@@ -66,7 +78,7 @@ function DayPage() {
       // Also look forward to support fallback for planets with no past ingress in dataset.
       const lookbackFrom = toISO(addDays(fromISO(date), -800));
       const lookforwardTo = toISO(addDays(fromISO(date), 800));
-      const [evRes, ingRes, retroRes, tRes, nRes] = await Promise.all([
+      const [evRes, ingRes, retroRes, tRes, nRes, piRes, pRes] = await Promise.all([
         supabase.from("astro_events").select("*").eq("date", date).order("event_type"),
         supabase
           .from("astro_events")
@@ -82,6 +94,8 @@ function DayPage() {
           .lte("date", date),
         supabase.from("tasks").select("*").eq("user_id", user.id).eq("date", date).is("time_slot", null).order("sort_order"),
         supabase.from("notes").select("content").eq("user_id", user.id).eq("date", date).maybeSingle(),
+        supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).eq("due_date", date),
+        supabase.from("projects").select("id,title").eq("user_id", user.id),
       ]);
       if (cancelled) return;
       setEvents((evRes.data ?? []) as AstroEvent[]);
@@ -89,6 +103,8 @@ function DayPage() {
       setRetro(retrogradePlanets((retroRes.data ?? []) as Array<{ planet: string | null; event_type: string; date: string }>, date));
       setTasks((tRes.data ?? []) as Task[]);
       setNote(nRes.data?.content ?? "");
+      setProjectItems((piRes.data ?? []) as ProjectItem[]);
+      setProjects((pRes.data ?? []) as ProjectLite[]);
     })();
     return () => { cancelled = true; };
   }, [user, date]);
@@ -126,6 +142,19 @@ function DayPage() {
     setTasks(arr => arr.filter(x => x.id !== t.id));
     await supabase.from("tasks").delete().eq("id", t.id);
   }
+
+  async function toggleProjectItem(it: ProjectItem) {
+    const next = !it.is_done;
+    setProjectItems(arr => arr.map(x => (x.id === it.id ? { ...x, is_done: next } : x)));
+    await supabase.from("project_items").update({ is_done: next }).eq("id", it.id);
+  }
+
+  async function removeProjectItemDate(it: ProjectItem) {
+    setProjectItems(arr => arr.filter(x => x.id !== it.id));
+    await supabase.from("project_items").update({ due_date: null }).eq("id", it.id);
+  }
+
+  const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
 
   async function saveNote() {
     if (!user) return;
@@ -246,7 +275,26 @@ function DayPage() {
                   </button>
                 </li>
               ))}
-              {tasks.length === 0 && (
+              {projectItems.map(it => (
+                <li key={it.id} className="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors">
+                  <Checkbox checked={it.is_done} onCheckedChange={() => toggleProjectItem(it)} />
+                  <div className={"flex-1 min-w-0 flex items-center gap-2 text-sm " + (it.is_done ? "line-through text-muted-foreground" : "")}>
+                    <span className="truncate">{it.title}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
+                      {projectTitle(it.project_id)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => removeProjectItemDate(it)}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    aria-label="убрать с этого дня"
+                    title="Убрать с этого дня (пункт останется в проекте)"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+              {tasks.length === 0 && projectItems.length === 0 && (
                 <li className="text-sm text-muted-foreground italic px-3 py-2">Пока ничего не запланировано.</li>
               )}
             </ul>

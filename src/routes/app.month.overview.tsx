@@ -58,6 +58,8 @@ function MonthOverview() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [tasksByDate, setTasksByDate] = useState<Record<string, Task[]>>({});
+  const [projectItemsByDate, setProjectItemsByDate] = useState<Record<string, Array<{ id: string; project_id: string; title: string; is_done: boolean }>>>({});
+  const [projects, setProjects] = useState<Record<string, string>>({});
   // Local draft text per date: only pending (not done) tasks, one per line.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -94,14 +96,25 @@ function MonthOverview() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const evRes = await supabase
-        .from("astro_events")
-        .select("*")
-        .gte("date", firstISO)
-        .lte("date", lastISO)
-        .order("date");
+      const [evRes, piRes, pRes] = await Promise.all([
+        supabase.from("astro_events").select("*").gte("date", firstISO).lte("date", lastISO).order("date"),
+        user
+          ? supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", firstISO).lte("due_date", lastISO)
+          : Promise.resolve({ data: [] as Array<{ id: string; project_id: string; title: string; is_done: boolean; due_date: string }> }),
+        user
+          ? supabase.from("projects").select("id,title").eq("user_id", user.id)
+          : Promise.resolve({ data: [] as Array<{ id: string; title: string }> }),
+      ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
+      const piGrouped: Record<string, Array<{ id: string; project_id: string; title: string; is_done: boolean }>> = {};
+      for (const it of (piRes.data ?? []) as Array<{ id: string; project_id: string; title: string; is_done: boolean; due_date: string }>) {
+        (piGrouped[it.due_date] ||= []).push({ id: it.id, project_id: it.project_id, title: it.title, is_done: it.is_done });
+      }
+      setProjectItemsByDate(piGrouped);
+      const pMap: Record<string, string> = {};
+      for (const p of (pRes.data ?? []) as Array<{ id: string; title: string }>) pMap[p.id] = p.title;
+      setProjects(pMap);
       await reloadTasks();
     })();
     return () => { cancelled = true; };
@@ -235,6 +248,23 @@ function MonthOverview() {
                     </TooltipContent>
                   )}
                 </Tooltip>
+
+                {inMonth && (projectItemsByDate[iso] ?? []).length > 0 && (
+                  <ul className="space-y-0.5">
+                    {(projectItemsByDate[iso] ?? []).map(it => (
+                      <li
+                        key={it.id}
+                        className={
+                          "text-[11px] leading-tight px-1.5 truncate rounded bg-primary/10 text-primary " +
+                          (it.is_done ? "line-through opacity-60" : "")
+                        }
+                        title={(projects[it.project_id] || "Проект") + ": " + it.title}
+                      >
+                        <span className="font-medium">{projects[it.project_id] || "Проект"}:</span> {it.title}
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
                 {inMonth && doneTasks.length > 0 && (
                   <ul className="space-y-0.5">
