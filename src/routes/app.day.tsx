@@ -42,6 +42,16 @@ type Task = {
   sort_order: number;
 };
 
+type ProjectItem = {
+  id: string;
+  project_id: string;
+  title: string;
+  is_done: boolean;
+  due_date: string | null;
+};
+
+type ProjectLite = { id: string; title: string };
+
 function DayPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -54,6 +64,8 @@ function DayPage() {
   const [positions, setPositions] = useState<Partial<Record<Planet, string>>>({});
   const [retro, setRetro] = useState<Set<Planet>>(new Set());
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
   const noteSave = useAutoSave();
@@ -66,7 +78,7 @@ function DayPage() {
       // Also look forward to support fallback for planets with no past ingress in dataset.
       const lookbackFrom = toISO(addDays(fromISO(date), -800));
       const lookforwardTo = toISO(addDays(fromISO(date), 800));
-      const [evRes, ingRes, retroRes, tRes, nRes] = await Promise.all([
+      const [evRes, ingRes, retroRes, tRes, nRes, piRes, pRes] = await Promise.all([
         supabase.from("astro_events").select("*").eq("date", date).order("event_type"),
         supabase
           .from("astro_events")
@@ -82,6 +94,8 @@ function DayPage() {
           .lte("date", date),
         supabase.from("tasks").select("*").eq("user_id", user.id).eq("date", date).is("time_slot", null).order("sort_order"),
         supabase.from("notes").select("content").eq("user_id", user.id).eq("date", date).maybeSingle(),
+        supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).eq("due_date", date),
+        supabase.from("projects").select("id,title").eq("user_id", user.id),
       ]);
       if (cancelled) return;
       setEvents((evRes.data ?? []) as AstroEvent[]);
@@ -89,6 +103,8 @@ function DayPage() {
       setRetro(retrogradePlanets((retroRes.data ?? []) as Array<{ planet: string | null; event_type: string; date: string }>, date));
       setTasks((tRes.data ?? []) as Task[]);
       setNote(nRes.data?.content ?? "");
+      setProjectItems((piRes.data ?? []) as ProjectItem[]);
+      setProjects((pRes.data ?? []) as ProjectLite[]);
     })();
     return () => { cancelled = true; };
   }, [user, date]);
