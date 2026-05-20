@@ -248,6 +248,7 @@ function ContentPlan() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
 
