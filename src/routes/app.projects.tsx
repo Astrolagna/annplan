@@ -284,12 +284,24 @@ function ItemRow({
     <li className="group flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/40 transition-colors">
       <Checkbox checked={item.is_done} onCheckedChange={onToggle} className="mt-0.5" />
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <input
+        <textarea
           value={title}
           onChange={e => setTitle(e.target.value)}
           onBlur={() => title !== item.title && onTitleChange(title.trim())}
+          rows={1}
+          ref={(el) => {
+            if (el) {
+              el.style.height = "auto";
+              el.style.height = el.scrollHeight + "px";
+            }
+          }}
+          onInput={(e) => {
+            const el = e.currentTarget;
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+          }}
           className={cn(
-            "bg-transparent focus:outline-none text-sm w-full",
+            "bg-transparent focus:outline-none text-sm w-full resize-none break-words whitespace-pre-wrap leading-snug",
             item.is_done && "line-through text-muted-foreground"
           )}
         />
