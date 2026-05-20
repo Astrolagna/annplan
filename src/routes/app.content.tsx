@@ -61,18 +61,29 @@ function ContentPlan() {
   const lastISO = toISO(grid[grid.length - 1]);
 
   const [posts, setPosts] = useState<ContentPost[]>([]);
+  const [events, setEvents] = useState<AstroEvent[]>([]);
   const [openDate, setOpenDate] = useState<string | null>(null);
 
   async function reload() {
-    if (!user) return;
-    const { data } = await supabase
-      .from("content_posts")
-      .select("id,date,content,socials,sort_order")
-      .eq("user_id", user.id)
-      .gte("date", firstISO)
-      .lte("date", lastISO)
-      .order("sort_order");
-    setPosts((data ?? []) as ContentPost[]);
+    const [postsRes, evRes] = await Promise.all([
+      user
+        ? supabase
+            .from("content_posts")
+            .select("id,date,content,socials,sort_order")
+            .eq("user_id", user.id)
+            .gte("date", firstISO)
+            .lte("date", lastISO)
+            .order("sort_order")
+        : Promise.resolve({ data: [] as ContentPost[] }),
+      supabase
+        .from("astro_events")
+        .select("*")
+        .gte("date", firstISO)
+        .lte("date", lastISO)
+        .order("date"),
+    ]);
+    setPosts((postsRes.data ?? []) as ContentPost[]);
+    setEvents((evRes.data ?? []) as AstroEvent[]);
   }
 
   useEffect(() => {
