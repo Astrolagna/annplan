@@ -37,6 +37,16 @@ type Task = {
 
 type Note = { date: string; content: string };
 
+type ProjectItem = {
+  id: string;
+  project_id: string;
+  title: string;
+  is_done: boolean;
+  due_date: string;
+};
+
+type ProjectLite = { id: string; title: string };
+
 function WeekPlan() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -49,15 +59,19 @@ function WeekPlan() {
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [projects, setProjects] = useState<ProjectLite[]>([]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, taskRes, noteRes] = await Promise.all([
+      const [evRes, taskRes, noteRes, piRes, pRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", first).lte("date", last),
         supabase.from("tasks").select("*").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
         supabase.from("notes").select("date,content").eq("user_id", user.id).gte("date", first).lte("date", last),
+        supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", first).lte("due_date", last),
+        supabase.from("projects").select("id,title").eq("user_id", user.id),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
@@ -65,6 +79,8 @@ function WeekPlan() {
       const m: Record<string, string> = {};
       for (const n of (noteRes.data as Note[] | null) ?? []) m[n.date] = n.content;
       setNotes(m);
+      setProjectItems((piRes.data ?? []) as ProjectItem[]);
+      setProjects((pRes.data ?? []) as ProjectLite[]);
     })();
     return () => { cancelled = true; };
   }, [user, first, last]);
