@@ -14,6 +14,7 @@ import {
   isToday,
 } from "@/lib/date-utils";
 import { type AstroEvent, dominantColor, groupByDate, DAY_COLOR_BG, eventIcon } from "@/lib/astro";
+import { SOCIAL_MAP } from "@/lib/socials";
 
 const searchSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -47,6 +48,13 @@ type ProjectItem = {
 
 type ProjectLite = { id: string; title: string };
 
+type ContentPost = {
+  id: string;
+  date: string;
+  content: string;
+  socials: string[];
+};
+
 function WeekPlan() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -61,17 +69,19 @@ function WeekPlan() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [posts, setPosts] = useState<ContentPost[]>([]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, taskRes, noteRes, piRes, pRes] = await Promise.all([
+      const [evRes, taskRes, noteRes, piRes, pRes, cpRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", first).lte("date", last),
         supabase.from("tasks").select("*").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
         supabase.from("notes").select("date,content").eq("user_id", user.id).gte("date", first).lte("date", last),
         supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", first).lte("due_date", last),
         supabase.from("projects").select("id,title").eq("user_id", user.id),
+        supabase.from("content_posts").select("id,date,content,socials").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
@@ -81,6 +91,7 @@ function WeekPlan() {
       setNotes(m);
       setProjectItems((piRes.data ?? []) as ProjectItem[]);
       setProjects((pRes.data ?? []) as ProjectLite[]);
+      setPosts((cpRes.data ?? []) as ContentPost[]);
     })();
     return () => { cancelled = true; };
   }, [user, first, last]);
@@ -204,6 +215,32 @@ function WeekPlan() {
             </div>
           );
         })}
+
+        {/* Content posts row */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          контент
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          const dayPosts = posts.filter(p => p.date === iso);
+          return (
+            <div key={"cp-" + iso} className="border-r border-b border-border last:border-r-0 p-1 flex flex-col gap-1 min-h-[28px]">
+              {dayPosts.map(p => (
+                <div key={p.id} className="text-[11px] bg-accent/40 rounded px-1.5 py-1 space-y-0.5">
+                  <div className="flex gap-0.5 flex-wrap">
+                    {p.socials.map(s => (
+                      <span key={s} className="text-[10px]" title={SOCIAL_MAP[s]?.label}>
+                        {SOCIAL_MAP[s]?.icon ?? s}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="whitespace-pre-wrap break-words leading-tight">{p.content || "(пусто)"}</div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+
         {SLOTS.map(slot => (
           <FragmentRow key={slot}>
             <div className="border-r border-b border-border px-2 py-2 text-xs text-muted-foreground tabular-nums sticky left-0 bg-card">

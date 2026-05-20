@@ -24,6 +24,7 @@ import {
   signRu,
 } from "@/lib/astro";
 import { useAutoSave, statusLabel } from "@/lib/use-autosave";
+import { PostEditor, type ContentPost } from "@/routes/app.content";
 
 const searchSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -66,6 +67,7 @@ function DayPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [posts, setPosts] = useState<ContentPost[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
   const noteSave = useAutoSave();
@@ -78,7 +80,7 @@ function DayPage() {
       // Also look forward to support fallback for planets with no past ingress in dataset.
       const lookbackFrom = toISO(addDays(fromISO(date), -800));
       const lookforwardTo = toISO(addDays(fromISO(date), 800));
-      const [evRes, ingRes, retroRes, tRes, nRes, piRes, pRes] = await Promise.all([
+      const [evRes, ingRes, retroRes, tRes, nRes, piRes, pRes, cpRes] = await Promise.all([
         supabase.from("astro_events").select("*").eq("date", date).order("event_type"),
         supabase
           .from("astro_events")
@@ -96,6 +98,7 @@ function DayPage() {
         supabase.from("notes").select("content").eq("user_id", user.id).eq("date", date).maybeSingle(),
         supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).eq("due_date", date),
         supabase.from("projects").select("id,title").eq("user_id", user.id),
+        supabase.from("content_posts").select("id,date,content,socials,sort_order").eq("user_id", user.id).eq("date", date).order("sort_order"),
       ]);
       if (cancelled) return;
       setEvents((evRes.data ?? []) as AstroEvent[]);
@@ -105,6 +108,7 @@ function DayPage() {
       setNote(nRes.data?.content ?? "");
       setProjectItems((piRes.data ?? []) as ProjectItem[]);
       setProjects((pRes.data ?? []) as ProjectLite[]);
+      setPosts((cpRes.data ?? []) as ContentPost[]);
     })();
     return () => { cancelled = true; };
   }, [user, date]);
@@ -155,6 +159,27 @@ function DayPage() {
   }
 
   const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
+
+  async function addPost() {
+    if (!user) return;
+    const nextOrder = posts.length > 0 ? Math.max(...posts.map(p => p.sort_order)) + 1 : 0;
+    const { data } = await supabase
+      .from("content_posts")
+      .insert({ user_id: user.id, date, content: "", socials: [], sort_order: nextOrder })
+      .select()
+      .single();
+    if (data) setPosts(arr => [...arr, data as ContentPost]);
+  }
+
+  async function updatePost(id: string, patch: Partial<Pick<ContentPost, "content" | "socials">>) {
+    setPosts(arr => arr.map(p => (p.id === id ? { ...p, ...patch } : p)));
+    await supabase.from("content_posts").update(patch).eq("id", id);
+  }
+
+  async function deletePost(id: string) {
+    setPosts(arr => arr.filter(p => p.id !== id));
+    await supabase.from("content_posts").delete().eq("id", id);
+  }
 
   async function saveNote() {
     if (!user) return;
@@ -309,6 +334,28 @@ function DayPage() {
               <Button onClick={addTask} className="rounded-xl">Добавить</Button>
             </div>
           </div>
+
+          <div className="card-soft p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-2xl">Контент-план</h2>
+              <Button variant="outline" size="sm" onClick={addPost} className="rounded-xl">+ Пост</Button>
+            </div>
+            <div className="space-y-3">
+              {posts.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">Постов на этот день нет.</p>
+              )}
+              {posts.map(p => (
+                <PostEditor
+                  key={p.id}
+                  post={p}
+                  onChange={patch => updatePost(p.id, patch)}
+                  onDelete={() => deletePost(p.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+
 
           <div className="card-soft p-6">
             <div className="flex items-center justify-between mb-3">

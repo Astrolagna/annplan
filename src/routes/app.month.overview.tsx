@@ -23,6 +23,9 @@ import {
   DAY_COLOR_BG,
 } from "@/lib/astro";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SOCIAL_MAP } from "@/lib/socials";
+
+type ContentPost = { id: string; date: string; content: string; socials: string[] };
 
 const searchSchema = z.object({
   ym: z.string().regex(/^\d{4}-\d{2}$/).optional(),
@@ -60,6 +63,7 @@ function MonthOverview() {
   const [tasksByDate, setTasksByDate] = useState<Record<string, Task[]>>({});
   const [projectItemsByDate, setProjectItemsByDate] = useState<Record<string, Array<{ id: string; project_id: string; title: string; is_done: boolean }>>>({});
   const [projects, setProjects] = useState<Record<string, string>>({});
+  const [postsByDate, setPostsByDate] = useState<Record<string, ContentPost[]>>({});
   // Local draft text per date: only pending (not done) tasks, one per line.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -96,7 +100,7 @@ function MonthOverview() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [evRes, piRes, pRes] = await Promise.all([
+      const [evRes, piRes, pRes, cpRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", firstISO).lte("date", lastISO).order("date"),
         user
           ? supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", firstISO).lte("due_date", lastISO)
@@ -104,6 +108,9 @@ function MonthOverview() {
         user
           ? supabase.from("projects").select("id,title").eq("user_id", user.id)
           : Promise.resolve({ data: [] as Array<{ id: string; title: string }> }),
+        user
+          ? supabase.from("content_posts").select("id,date,content,socials").eq("user_id", user.id).gte("date", firstISO).lte("date", lastISO).order("sort_order")
+          : Promise.resolve({ data: [] as ContentPost[] }),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
@@ -115,6 +122,9 @@ function MonthOverview() {
       const pMap: Record<string, string> = {};
       for (const p of (pRes.data ?? []) as Array<{ id: string; title: string }>) pMap[p.id] = p.title;
       setProjects(pMap);
+      const cpGrouped: Record<string, ContentPost[]> = {};
+      for (const p of (cpRes.data ?? []) as ContentPost[]) (cpGrouped[p.date] ||= []).push(p);
+      setPostsByDate(cpGrouped);
       await reloadTasks();
     })();
     return () => { cancelled = true; };
@@ -265,6 +275,25 @@ function MonthOverview() {
                     ))}
                   </ul>
                 )}
+
+                {inMonth && (postsByDate[iso] ?? []).length > 0 && (
+                  <ul className="space-y-0.5">
+                    {(postsByDate[iso] ?? []).map(p => (
+                      <li
+                        key={p.id}
+                        className="text-[11px] leading-tight px-1.5 truncate rounded bg-accent/40 flex items-center gap-1"
+                        title={p.content}
+                      >
+                        <span className="shrink-0 text-[10px]">
+                          {p.socials.slice(0, 3).map(s => SOCIAL_MAP[s]?.icon ?? "").join("")}
+                        </span>
+                        <span className="truncate">{p.content || "(пост)"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+
 
                 {inMonth && doneTasks.length > 0 && (
                   <ul className="space-y-0.5">
