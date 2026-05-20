@@ -19,6 +19,7 @@ import { Route as AppWeekRouteImport } from './routes/app.week'
 import { Route as AppProjectsRouteImport } from './routes/app.projects'
 import { Route as AppMonthRouteImport } from './routes/app.month'
 import { Route as AppDayRouteImport } from './routes/app.day'
+import { Route as AppContentRouteImport } from './routes/app.content'
 import { Route as AppWeekTransitsRouteImport } from './routes/app.week.transits'
 import { Route as AppWeekPlanRouteImport } from './routes/app.week.plan'
 import { Route as AppMonthTransitsRouteImport } from './routes/app.month.transits'
@@ -75,6 +76,11 @@ const AppDayRoute = AppDayRouteImport.update({
   path: '/day',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContentRoute = AppContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppWeekTransitsRoute = AppWeekTransitsRouteImport.update({
   id: '/transits',
   path: '/transits',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/app/content': typeof AppContentRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
   '/app/projects': typeof AppProjectsRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/app/content': typeof AppContentRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
   '/app/projects': typeof AppProjectsRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/app/content': typeof AppContentRoute
   '/app/day': typeof AppDayRoute
   '/app/month': typeof AppMonthRouteWithChildren
   '/app/projects': typeof AppProjectsRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/app/content'
     | '/app/day'
     | '/app/month'
     | '/app/projects'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/app/content'
     | '/app/day'
     | '/app/month'
     | '/app/projects'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/app/content'
     | '/app/day'
     | '/app/month'
     | '/app/projects'
@@ -288,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDayRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/content': {
+      id: '/app/content'
+      path: '/content'
+      fullPath: '/app/content'
+      preLoaderRoute: typeof AppContentRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/week/transits': {
       id: '/app/week/transits'
       path: '/transits'
@@ -356,6 +375,7 @@ const AppWeekRouteWithChildren =
   AppWeekRoute._addFileChildren(AppWeekRouteChildren)
 
 interface AppRouteChildren {
+  AppContentRoute: typeof AppContentRoute
   AppDayRoute: typeof AppDayRoute
   AppMonthRoute: typeof AppMonthRouteWithChildren
   AppProjectsRoute: typeof AppProjectsRoute
@@ -363,6 +383,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppContentRoute: AppContentRoute,
   AppDayRoute: AppDayRoute,
   AppMonthRoute: AppMonthRouteWithChildren,
   AppProjectsRoute: AppProjectsRoute,
@@ -382,3 +403,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
