@@ -275,7 +275,26 @@ function DayPage() {
                   </button>
                 </li>
               ))}
-              {tasks.length === 0 && (
+              {projectItems.map(it => (
+                <li key={it.id} className="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors">
+                  <Checkbox checked={it.is_done} onCheckedChange={() => toggleProjectItem(it)} />
+                  <div className={"flex-1 min-w-0 flex items-center gap-2 text-sm " + (it.is_done ? "line-through text-muted-foreground" : "")}>
+                    <span className="truncate">{it.title}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
+                      {projectTitle(it.project_id)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => removeProjectItemDate(it)}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    aria-label="убрать с этого дня"
+                    title="Убрать с этого дня (пункт останется в проекте)"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+              {tasks.length === 0 && projectItems.length === 0 && (
                 <li className="text-sm text-muted-foreground italic px-3 py-2">Пока ничего не запланировано.</li>
               )}
             </ul>
