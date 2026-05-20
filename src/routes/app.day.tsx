@@ -66,6 +66,7 @@ function DayPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [posts, setPosts] = useState<ContentPost[]>([]);
   const [note, setNote] = useState("");
   const [draft, setDraft] = useState("");
   const noteSave = useAutoSave();
