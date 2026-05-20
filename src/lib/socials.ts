@@ -3,22 +3,18 @@ export type SocialKey =
   | "instagram"
   | "vk"
   | "youtube"
-  | "tiktok"
-  | "x"
   | "threads"
-  | "facebook"
-  | "linkedin";
+  | "zen"
+  | "max";
 
 export const SOCIALS: { key: SocialKey; label: string; short: string; icon: string }[] = [
   { key: "telegram", label: "Telegram", short: "TG", icon: "✈️" },
   { key: "instagram", label: "Instagram", short: "IG", icon: "📷" },
   { key: "vk", label: "VK", short: "VK", icon: "🅥" },
   { key: "youtube", label: "YouTube", short: "YT", icon: "▶️" },
-  { key: "tiktok", label: "TikTok", short: "TT", icon: "🎵" },
-  { key: "x", label: "X", short: "X", icon: "𝕏" },
   { key: "threads", label: "Threads", short: "TH", icon: "@" },
-  { key: "facebook", label: "Facebook", short: "FB", icon: "f" },
-  { key: "linkedin", label: "LinkedIn", short: "in", icon: "in" },
+  { key: "zen", label: "Яндекс Дзен", short: "Дзен", icon: "Я" },
+  { key: "max", label: "MAX", short: "MAX", icon: "M" },
 ];
 
 export const SOCIAL_MAP: Record<string, { label: string; short: string; icon: string }> =
