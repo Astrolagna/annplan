@@ -249,6 +249,23 @@ function MonthOverview() {
                   )}
                 </Tooltip>
 
+                {inMonth && (projectItemsByDate[iso] ?? []).length > 0 && (
+                  <ul className="space-y-0.5">
+                    {(projectItemsByDate[iso] ?? []).map(it => (
+                      <li
+                        key={it.id}
+                        className={
+                          "text-[11px] leading-tight px-1.5 truncate rounded bg-primary/10 text-primary " +
+                          (it.is_done ? "line-through opacity-60" : "")
+                        }
+                        title={(projects[it.project_id] || "Проект") + ": " + it.title}
+                      >
+                        <span className="font-medium">{projects[it.project_id] || "Проект"}:</span> {it.title}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 {inMonth && doneTasks.length > 0 && (
                   <ul className="space-y-0.5">
                     {doneTasks.map(t => (
