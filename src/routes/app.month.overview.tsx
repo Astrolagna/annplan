@@ -23,6 +23,9 @@ import {
   DAY_COLOR_BG,
 } from "@/lib/astro";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SOCIAL_MAP } from "@/lib/socials";
+
+type ContentPost = { id: string; date: string; content: string; socials: string[] };
 
 const searchSchema = z.object({
   ym: z.string().regex(/^\d{4}-\d{2}$/).optional(),
