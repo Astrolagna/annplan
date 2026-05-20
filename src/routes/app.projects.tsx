@@ -145,7 +145,7 @@ function ProjectsPage() {
           Пока нет проектов. Создайте первый — это может быть «Работа», «Дом», «Учёба» или любая отдельная область жизни.
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {projects.map(p => (
             <ProjectColumn
               key={p.id}
