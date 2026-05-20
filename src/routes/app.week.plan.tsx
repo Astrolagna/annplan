@@ -179,7 +179,31 @@ function WeekPlan() {
           );
         })}
 
-        {/* Time slots */}
+        {/* Project items row (all-day) */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          проекты
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          const dayItems = projectItems.filter(i => i.due_date === iso);
+          return (
+            <div key={"proj-" + iso} className="border-r border-b border-border last:border-r-0 p-1 flex flex-col gap-1 min-h-[28px]">
+              {dayItems.map(it => (
+                <button
+                  key={it.id}
+                  onClick={() => toggleProjectItem(it)}
+                  className={
+                    "text-left text-[11px] bg-primary/10 text-primary rounded px-1.5 py-0.5 hover:bg-primary/20 transition-colors " +
+                    (it.is_done ? "line-through opacity-60" : "")
+                  }
+                  title={projectTitle(it.project_id)}
+                >
+                  <span className="font-medium">{projectTitle(it.project_id)}:</span> {it.title}
+                </button>
+              ))}
+            </div>
+          );
+        })}
         {SLOTS.map(slot => (
           <FragmentRow key={slot}>
             <div className="border-r border-b border-border px-2 py-2 text-xs text-muted-foreground tabular-nums sticky left-0 bg-card">
