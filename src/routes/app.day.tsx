@@ -160,6 +160,27 @@ function DayPage() {
 
   const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
 
+  async function addPost() {
+    if (!user) return;
+    const nextOrder = posts.length > 0 ? Math.max(...posts.map(p => p.sort_order)) + 1 : 0;
+    const { data } = await supabase
+      .from("content_posts")
+      .insert({ user_id: user.id, date, content: "", socials: [], sort_order: nextOrder })
+      .select()
+      .single();
+    if (data) setPosts(arr => [...arr, data as ContentPost]);
+  }
+
+  async function updatePost(id: string, patch: Partial<Pick<ContentPost, "content" | "socials">>) {
+    setPosts(arr => arr.map(p => (p.id === id ? { ...p, ...patch } : p)));
+    await supabase.from("content_posts").update(patch).eq("id", id);
+  }
+
+  async function deletePost(id: string) {
+    setPosts(arr => arr.filter(p => p.id !== id));
+    await supabase.from("content_posts").delete().eq("id", id);
+  }
+
   async function saveNote() {
     if (!user) return;
     await noteSave.run(async () => {
