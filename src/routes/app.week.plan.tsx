@@ -125,6 +125,14 @@ function WeekPlan() {
     await supabase.from("tasks").delete().eq("id", t.id);
   }
 
+  async function toggleProjectItem(it: ProjectItem) {
+    const next = !it.is_done;
+    setProjectItems(arr => arr.map(x => (x.id === it.id ? { ...x, is_done: next } : x)));
+    await supabase.from("project_items").update({ is_done: next }).eq("id", it.id);
+  }
+
+  const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
+
   return (
     <div className="card-soft overflow-x-auto">
       <div className="grid grid-cols-[60px_repeat(7,minmax(120px,1fr))] min-w-[900px]">
