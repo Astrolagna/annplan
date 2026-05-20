@@ -145,7 +145,7 @@ function ProjectsPage() {
           Пока нет проектов. Создайте первый — это может быть «Работа», «Дом», «Учёба» или любая отдельная область жизни.
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {projects.map(p => (
             <ProjectColumn
               key={p.id}
@@ -193,7 +193,7 @@ function ProjectColumn({
   useEffect(() => { setTitle(project.title); }, [project.title]);
 
   return (
-    <div className="card-soft p-4 w-[300px] shrink-0 flex flex-col gap-3 max-h-[calc(100vh-220px)]">
+    <div className="card-soft p-4 w-full flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <input
           value={title}
@@ -226,7 +226,7 @@ function ProjectColumn({
         </AlertDialog>
       </div>
 
-      <ul className="space-y-1.5 overflow-y-auto flex-1 -mx-1 px-1">
+      <ul className="space-y-1.5 flex-1 -mx-1 px-1">
         {items.map(it => (
           <ItemRow
             key={it.id}
