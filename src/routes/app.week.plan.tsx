@@ -69,6 +69,7 @@ function WeekPlan() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [posts, setPosts] = useState<ContentPost[]>([]);
 
   useEffect(() => {
     if (!user) return;
