@@ -226,7 +226,7 @@ function ProjectColumn({
         </AlertDialog>
       </div>
 
-      <ul className="space-y-1.5 overflow-y-auto flex-1 -mx-1 px-1">
+      <ul className="space-y-1.5 flex-1 -mx-1 px-1">
         {items.map(it => (
           <ItemRow
             key={it.id}
