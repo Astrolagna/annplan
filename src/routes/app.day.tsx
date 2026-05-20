@@ -336,6 +336,28 @@ function DayPage() {
           </div>
 
           <div className="card-soft p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-2xl">Контент-план</h2>
+              <Button variant="outline" size="sm" onClick={addPost} className="rounded-xl">+ Пост</Button>
+            </div>
+            <div className="space-y-3">
+              {posts.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">Постов на этот день нет.</p>
+              )}
+              {posts.map(p => (
+                <PostEditor
+                  key={p.id}
+                  post={p}
+                  onChange={patch => updatePost(p.id, patch)}
+                  onDelete={() => deletePost(p.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+
+
+          <div className="card-soft p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-serif text-2xl">Заметки</h2>
               <span className="text-xs text-muted-foreground italic">{statusLabel(noteSave.status)}</span>
