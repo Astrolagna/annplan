@@ -276,6 +276,25 @@ function MonthOverview() {
                   </ul>
                 )}
 
+                {inMonth && (postsByDate[iso] ?? []).length > 0 && (
+                  <ul className="space-y-0.5">
+                    {(postsByDate[iso] ?? []).map(p => (
+                      <li
+                        key={p.id}
+                        className="text-[11px] leading-tight px-1.5 truncate rounded bg-accent/40 flex items-center gap-1"
+                        title={p.content}
+                      >
+                        <span className="shrink-0 text-[10px]">
+                          {p.socials.slice(0, 3).map(s => SOCIAL_MAP[s]?.icon ?? "").join("")}
+                        </span>
+                        <span className="truncate">{p.content || "(пост)"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+
+
                 {inMonth && doneTasks.length > 0 && (
                   <ul className="space-y-0.5">
                     {doneTasks.map(t => (
