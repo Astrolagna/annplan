@@ -129,8 +129,10 @@ function ContentPlan() {
   );
 
   const dialogPosts = openDate ? postsByDate[openDate] ?? [] : [];
+  const eventsByDate = useMemo(() => groupByDate(events), [events]);
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl sm:text-3xl capitalize">{monthLabel}</h1>
@@ -154,6 +156,8 @@ function ContentPlan() {
             const inMonth = isSameMonth(d, year, month0);
             const today = isToday(d);
             const dayPosts = postsByDate[iso] ?? [];
+            const dayEvents = eventsByDate[iso] ?? [];
+            const color = dominantColor(dayEvents);
             return (
               <button
                 key={idx}
@@ -164,19 +168,45 @@ function ContentPlan() {
                   inMonth ? "bg-card hover:bg-muted/30" : "bg-muted/20 text-muted-foreground cursor-default",
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <span
-                    className={cn(
-                      "text-sm font-medium leading-none w-6 h-6 flex items-center justify-center rounded-full",
-                      today && "bg-primary text-primary-foreground",
-                    )}
-                  >
-                    {d.getDate()}
-                  </span>
-                  {inMonth && (
-                    <Plus className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-muted-foreground" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          "text-sm font-medium leading-none w-6 h-6 flex items-center justify-center rounded-full",
+                          today && "bg-primary text-primary-foreground",
+                        )}
+                      >
+                        {d.getDate()}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {color && (
+                          <span className={cn("inline-block w-2 h-2 rounded-full", DAY_COLOR_BG[color])} />
+                        )}
+                        {dayEvents.slice(0, 2).map(ev => (
+                          <span key={ev.id} className="text-[11px] leading-none" aria-hidden>
+                            {eventIcon(ev)}
+                          </span>
+                        ))}
+                        {inMonth && (
+                          <Plus className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  {dayEvents.length > 0 && (
+                    <TooltipContent side="top" className="max-w-xs">
+                      <ul className="space-y-1 text-xs">
+                        {dayEvents.map(ev => (
+                          <li key={ev.id}>
+                            <span className="mr-1">{eventIcon(ev)}</span>
+                            {ev.description_ru}
+                          </li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
                   )}
-                </div>
+                </Tooltip>
                 <div className="flex flex-col gap-1 mt-1">
                   {dayPosts.map(p => (
                     <PostPreview key={p.id} post={p} />
