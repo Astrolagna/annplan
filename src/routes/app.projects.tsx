@@ -193,7 +193,7 @@ function ProjectColumn({
   useEffect(() => { setTitle(project.title); }, [project.title]);
 
   return (
-    <div className="card-soft p-4 w-[300px] shrink-0 flex flex-col gap-3 max-h-[calc(100vh-220px)]">
+    <div className="card-soft p-4 w-full flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <input
           value={title}
