@@ -58,6 +58,8 @@ function MonthOverview() {
 
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [tasksByDate, setTasksByDate] = useState<Record<string, Task[]>>({});
+  const [projectItemsByDate, setProjectItemsByDate] = useState<Record<string, Array<{ id: string; project_id: string; title: string; is_done: boolean }>>>({});
+  const [projects, setProjects] = useState<Record<string, string>>({});
   // Local draft text per date: only pending (not done) tasks, one per line.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDate, setActiveDate] = useState<string | null>(null);
