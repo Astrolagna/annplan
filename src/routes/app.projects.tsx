@@ -248,6 +248,13 @@ function ProjectColumn({
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => {
             if (e.key === "Enter" && draft.trim()) {
+              e.preventDefault();
+              onAddItem(draft);
+              setDraft("");
+            }
+          }}
+          onBlur={() => {
+            if (draft.trim()) {
               onAddItem(draft);
               setDraft("");
             }
