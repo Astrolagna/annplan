@@ -48,6 +48,13 @@ type ProjectItem = {
 
 type ProjectLite = { id: string; title: string };
 
+type ContentPost = {
+  id: string;
+  date: string;
+  content: string;
+  socials: string[];
+};
+
 function WeekPlan() {
   const search = Route.useSearch();
   const navigate = useNavigate();
