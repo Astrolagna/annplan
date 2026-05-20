@@ -18,6 +18,14 @@ import {
   formatLong,
 } from "@/lib/date-utils";
 import { SOCIALS, SOCIAL_MAP, type SocialKey } from "@/lib/socials";
+import {
+  type AstroEvent,
+  groupByDate,
+  dominantColor,
+  eventIcon,
+  DAY_COLOR_BG,
+} from "@/lib/astro";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
