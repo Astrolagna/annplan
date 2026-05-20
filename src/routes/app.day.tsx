@@ -143,6 +143,19 @@ function DayPage() {
     await supabase.from("tasks").delete().eq("id", t.id);
   }
 
+  async function toggleProjectItem(it: ProjectItem) {
+    const next = !it.is_done;
+    setProjectItems(arr => arr.map(x => (x.id === it.id ? { ...x, is_done: next } : x)));
+    await supabase.from("project_items").update({ is_done: next }).eq("id", it.id);
+  }
+
+  async function removeProjectItemDate(it: ProjectItem) {
+    setProjectItems(arr => arr.filter(x => x.id !== it.id));
+    await supabase.from("project_items").update({ due_date: null }).eq("id", it.id);
+  }
+
+  const projectTitle = (id: string) => projects.find(p => p.id === id)?.title || "Проект";
+
   async function saveNote() {
     if (!user) return;
     await noteSave.run(async () => {
