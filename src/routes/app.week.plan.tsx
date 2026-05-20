@@ -215,6 +215,32 @@ function WeekPlan() {
             </div>
           );
         })}
+
+        {/* Content posts row */}
+        <div className="border-r border-b border-border px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider sticky left-0 bg-card flex items-start">
+          контент
+        </div>
+        {days.map(d => {
+          const iso = toISO(d);
+          const dayPosts = posts.filter(p => p.date === iso);
+          return (
+            <div key={"cp-" + iso} className="border-r border-b border-border last:border-r-0 p-1 flex flex-col gap-1 min-h-[28px]">
+              {dayPosts.map(p => (
+                <div key={p.id} className="text-[11px] bg-accent/40 rounded px-1.5 py-1 space-y-0.5">
+                  <div className="flex gap-0.5 flex-wrap">
+                    {p.socials.map(s => (
+                      <span key={s} className="text-[10px]" title={SOCIAL_MAP[s]?.label}>
+                        {SOCIAL_MAP[s]?.icon ?? s}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="whitespace-pre-wrap break-words leading-tight">{p.content || "(пусто)"}</div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+
         {SLOTS.map(slot => (
           <FragmentRow key={slot}>
             <div className="border-r border-b border-border px-2 py-2 text-xs text-muted-foreground tabular-nums sticky left-0 bg-card">
