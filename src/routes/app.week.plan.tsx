@@ -75,12 +75,13 @@ function WeekPlan() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [evRes, taskRes, noteRes, piRes, pRes] = await Promise.all([
+      const [evRes, taskRes, noteRes, piRes, pRes, cpRes] = await Promise.all([
         supabase.from("astro_events").select("*").gte("date", first).lte("date", last),
         supabase.from("tasks").select("*").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
         supabase.from("notes").select("date,content").eq("user_id", user.id).gte("date", first).lte("date", last),
         supabase.from("project_items").select("id,project_id,title,is_done,due_date").eq("user_id", user.id).gte("due_date", first).lte("due_date", last),
         supabase.from("projects").select("id,title").eq("user_id", user.id),
+        supabase.from("content_posts").select("id,date,content,socials").eq("user_id", user.id).gte("date", first).lte("date", last).order("sort_order"),
       ]);
       if (cancelled) return;
       if (evRes.data) setEvents(evRes.data as AstroEvent[]);
@@ -90,6 +91,7 @@ function WeekPlan() {
       setNotes(m);
       setProjectItems((piRes.data ?? []) as ProjectItem[]);
       setProjects((pRes.data ?? []) as ProjectLite[]);
+      setPosts((cpRes.data ?? []) as ContentPost[]);
     })();
     return () => { cancelled = true; };
   }, [user, first, last]);
